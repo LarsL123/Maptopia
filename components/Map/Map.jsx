@@ -1,6 +1,12 @@
 "use client"; // Must be first line
 
-import { MapContainer, TileLayer, Marker, Popup, ImageOverlay } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  ImageOverlay,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility"; // fixes missing marker icons
@@ -10,11 +16,15 @@ export default function Map() {
 
   const mapPosition = [
     [63.39580092641835, 10.444216338859054],
-    [63.40216052271733, 10.464352992915757]
+    [63.40216052271733, 10.464352992915757],
   ];
 
   return (
-    <MapContainer center={position} zoom={13} style={{ height: "1000px", width: "80%" }}>
+    <MapContainer
+      center={position}
+      zoom={13}
+      style={{ height: "1000px", width: "80%" }}
+    >
       {/* Base OSM Layer */}
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

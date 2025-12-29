@@ -1,8 +1,10 @@
-// ---- KML values ----
+//Code for rotating KML image corners to Leaflet-ready coordinates
+
+// ---- KML values ---- //TODO: read from KML file
 const north = 63.425680672421109;
 const south = 63.395816963699154;
-const east  = 10.288496233499727;
-const west  = 10.175326477930689;
+const east = 10.288496233499727;
+const west = 10.175326477930689;
 const rotationDeg = -2.1316596087590511;
 
 // ---- Center ----
@@ -33,7 +35,7 @@ const corners = [
   [north, west], // NW
   [north, east], // NE
   [south, east], // SE
-  [south, west]  // SW
+  [south, west], // SW
 ];
 
 // ---- Rotation ----
