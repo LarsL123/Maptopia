@@ -1,47 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useMap, Polygon, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
+import getCategoryStyle from "./DrawnAreaCategory";
 
 /*
   Important to understand. The data source of truth for drawn areas is the React state.
   The code is mostly about syncing Leaflet.pm polygons to our React GeoJSON data.
   Understand/refresh this when modifying the code.
 */
-
-const getCategoryStyle = (category) => {
-  const styles = {
-    heritage: {
-      color: "#8B4513",
-      fillColor: "#D2691E",
-      fillOpacity: 0.4,
-      weight: 2,
-    },
-    parks: {
-      color: "#228B22",
-      fillColor: "#90EE90",
-      fillOpacity: 0.4,
-      weight: 2,
-    },
-    development: {
-      color: "#4169E1",
-      fillColor: "#87CEEB",
-      fillOpacity: 0.4,
-      weight: 2,
-    },
-  };
-  return (
-    styles[category] || {
-      color: "#666",
-      fillColor: "#ccc",
-      fillOpacity: 0.4,
-      weight: 2,
-    }
-  );
-};
 
 export default function DrawnAreas() {
   const map = useMap();
@@ -73,48 +43,40 @@ export default function DrawnAreas() {
       });
     };
 
-    // Initialize after a short delay to ensure map is ready. If not controlls wont show.
+    // Initialize after a short delay to ensure map is ready. If not controls won't show.
     setTimeout(initializeControls, 100);
 
-    map.on("pm:create", async (e) => {
-      const layer = e.layer;
-      const geojson = layer.toGeoJSON();
+    map.on("pm:create", handleCreate(setFeatures));
 
-      const newFeature = {
-        ...geojson,
-        properties: {
-          id: `area-${Date.now()}`,
-          title: "New Area",
-          description: "Click to edit",
-          category: "default",
-          createdAt: new Date().toISOString(),
-        },
-      };
+    map.on("pm:remove", handleRemove(setFeatures));
 
-      // Optimistic update
-      setFeatures((prev) => [...prev, newFeature]);
-      layer.remove();
-
-      try {
-        await fetch("/api/features", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newFeature),
-        });
-      } catch (err) {
-        console.error("Failed to save feature:", err);
+    return () => {
+      if (map.pm && initializedRef.current) {
+        try {
+          map.pm.removeControls();
+        } catch (error) {
+          console.error("DrawnAreas: Error removing controls", error);
+        }
       }
-    });
+      map.off("pm:create");
+      map.off("pm:remove");
+    };
+  }, [map]);
 
-    map.on("pm:edit", async (e) => {
-      e.layers.eachLayer(async (layer) => {
+  const handleAddLayer = useCallback(
+    (feature) => (e) => {
+      const layer = e.target;
+      layer.feature = feature;
+
+      // Remove duplicate listeners
+      layer.off("pm:edit");
+
+      const handleEdit = async () => {
         const id = layer.feature?.properties?.id;
-
         if (!id) return;
 
         const updatedGeoJSON = layer.toGeoJSON();
 
-        //One edit could be to multiple features
         setFeatures((prev) =>
           prev.map((f) =>
             f.properties.id === id
@@ -132,35 +94,21 @@ export default function DrawnAreas() {
         } catch (err) {
           console.error("Failed to update feature:", err);
         }
-      });
-    });
+      };
 
-    map.on("pm:remove", async (e) => {
-      const id = e.layer.feature?.properties?.id;
-      if (!id) return;
+      layer.on("pm:edit", handleEdit);
+      layer._pmEditHandler = handleEdit;
+    },
+    []
+  );
 
-      setFeatures((prev) => prev.filter((f) => f.properties.id !== id));
-
-      try {
-        await fetch(`/api/features/${id}`, { method: "DELETE" });
-      } catch (err) {
-        console.error("Failed to delete feature:", err);
-      }
-    });
-
-    return () => {
-      if (map.pm && initializedRef.current) {
-        try {
-          map.pm.removeControls();
-        } catch (error) {
-          console.error("DrawnAreas: Error removing controls", error);
-        }
-      }
-      map.off("pm:create");
-      map.off("pm:edit");
-      map.off("pm:remove");
-    };
-  }, [map]);
+  const handleRemoveLayer = useCallback((e) => {
+    const layer = e.target;
+    if (layer._pmEditHandler) {
+      layer.off("pm:edit", layer._pmEditHandler);
+      delete layer._pmEditHandler;
+    }
+  }, []);
 
   return (
     <>
@@ -175,9 +123,9 @@ export default function DrawnAreas() {
           pathOptions={getCategoryStyle(feature.properties.category)}
           pmIgnore={false} //Makes my polygons editable by Leaflet.pm
           eventHandlers={{
-            add: (e) => {
-              e.target.feature = feature; // This associates the Leaflet layer with its GeoJSON feature and is integral in edit/remove.
-            },
+            //Had to be done here because I didn't get map.on("pm:edit") to work.
+            add: handleAddLayer(feature),
+            remove: handleRemoveLayer,
           }}
         >
           <Popup>
@@ -189,4 +137,51 @@ export default function DrawnAreas() {
       ))}
     </>
   );
+}
+
+function handleCreate(setFeatures) {
+  return async (e) => {
+    const layer = e.layer;
+    const geojson = layer.toGeoJSON();
+
+    const newFeature = {
+      ...geojson,
+      properties: {
+        id: `area-${Date.now()}`,
+        title: "New Area",
+        description: "Click to edit",
+        category: "default",
+        createdAt: new Date().toISOString(),
+      },
+    };
+
+    // Optimistic update
+    setFeatures((prev) => [...prev, newFeature]);
+    layer.remove();
+
+    try {
+      await fetch("/api/features", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newFeature),
+      });
+    } catch (err) {
+      console.error("Failed to save feature:", err);
+    }
+  };
+}
+
+function handleRemove(setFeatures) {
+  return async (e) => {
+    const id = e.layer.feature?.properties?.id;
+    if (!id) return;
+
+    setFeatures((prev) => prev.filter((f) => f.properties.id !== id));
+
+    try {
+      await fetch(`/api/features/${id}`, { method: "DELETE" });
+    } catch (err) {
+      console.error("Failed to delete feature:", err);
+    }
+  };
 }
