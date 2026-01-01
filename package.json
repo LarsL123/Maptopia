@@ -14,6 +14,7 @@
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",
     "leaflet-imageoverlay-rotated": "^0.2.1",
+    "mongodb": "^7.0.0",
     "next": "16.1.1",
     "proj4": "^2.20.2",
     "proj4leaflet": "^1.0.2",

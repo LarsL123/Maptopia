@@ -2,102 +2,43 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMap, Polygon, Popup } from "react-leaflet";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 
 /*
-  Important to undertand. The data source of truth for drawn areas is the React state. 
-  The code is mostly about syncing Leaftlet.pm polygons to our React GeoJSON data. 
+  Important to understand. The data source of truth for drawn areas is the React state.
+  The code is mostly about syncing Leaflet.pm polygons to our React GeoJSON data.
   Understand/refresh this when modifying the code.
 */
 
-const mockAreasData = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      properties: {
-        id: "area-1",
-        title: "Historical District",
-        description: "Old town area with preserved buildings",
-        category: "heritage",
-        createdAt: "2025-01-15T10:00:00Z",
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [10.340897, 63.422779],
-            [10.348897, 63.422779],
-            [10.348897, 63.418779],
-            [10.340897, 63.418779],
-            [10.340897, 63.422779],
-          ],
-        ],
-      },
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: "area-2",
-        title: "Park Zone",
-        description: "Green space and recreational area",
-        category: "parks",
-        createdAt: "2025-01-16T14:30:00Z",
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [10.335897, 63.419779],
-            [10.339897, 63.421779],
-            [10.343897, 63.419779],
-            [10.341897, 63.416779],
-            [10.337897, 63.417779],
-            [10.335897, 63.419779],
-          ],
-        ],
-      },
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: "area-3",
-        title: "Development Zone",
-        description: "Planned construction area",
-        category: "development",
-        createdAt: "2025-01-17T09:15:00Z",
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [10.349897, 63.423779],
-            [10.355897, 63.423779],
-            [10.355897, 63.420779],
-            [10.349897, 63.420779],
-            [10.349897, 63.423779],
-          ],
-        ],
-      },
-    },
-  ],
-};
-
 const getCategoryStyle = (category) => {
   const styles = {
-    heritage: { color: "#8B4513", fillColor: "#D2691E", fillOpacity: 0.4 },
-    parks: { color: "#228B22", fillColor: "#90EE90", fillOpacity: 0.4 },
-    development: { color: "#4169E1", fillColor: "#87CEEB", fillOpacity: 0.4 },
+    heritage: {
+      color: "#8B4513",
+      fillColor: "#D2691E",
+      fillOpacity: 0.4,
+      weight: 2,
+    },
+    parks: {
+      color: "#228B22",
+      fillColor: "#90EE90",
+      fillOpacity: 0.4,
+      weight: 2,
+    },
+    development: {
+      color: "#4169E1",
+      fillColor: "#87CEEB",
+      fillOpacity: 0.4,
+      weight: 2,
+    },
   };
-
   return (
-    styles[category] ?? {
+    styles[category] || {
       color: "#666",
       fillColor: "#ccc",
       fillOpacity: 0.4,
+      weight: 2,
     }
   );
 };
@@ -105,8 +46,14 @@ const getCategoryStyle = (category) => {
 export default function DrawnAreas() {
   const map = useMap();
   const initializedRef = useRef(false);
+  const [features, setFeatures] = useState([]);
 
-  const [features, setFeatures] = useState(mockAreasData.features);
+  useEffect(() => {
+    fetch("/api/features")
+      .then((res) => res.json())
+      .then((data) => setFeatures(data))
+      .catch((err) => console.error("Failed to load features:", err));
+  }, []);
 
   useEffect(() => {
     if (!map) return;
@@ -129,9 +76,8 @@ export default function DrawnAreas() {
     // Initialize after a short delay to ensure map is ready. If not controlls wont show.
     setTimeout(initializeControls, 100);
 
-    map.on("pm:create", (e) => {
+    map.on("pm:create", async (e) => {
       const layer = e.layer;
-
       const geojson = layer.toGeoJSON();
 
       const newFeature = {
@@ -139,38 +85,67 @@ export default function DrawnAreas() {
         properties: {
           id: `area-${Date.now()}`,
           title: "New Area",
-          description: "Click to edit description",
+          description: "Click to edit",
           category: "default",
           createdAt: new Date().toISOString(),
         },
       };
 
+      // Optimistic update
       setFeatures((prev) => [...prev, newFeature]);
-
       layer.remove();
+
+      try {
+        await fetch("/api/features", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newFeature),
+        });
+      } catch (err) {
+        console.error("Failed to save feature:", err);
+      }
     });
 
-    map.on("pm:edit", (e) => {
-      e.layers.eachLayer((layer) => {
+    map.on("pm:edit", async (e) => {
+      e.layers.eachLayer(async (layer) => {
         const id = layer.feature?.properties?.id;
+
         if (!id) return;
 
-        const updated = layer.toGeoJSON();
+        const updatedGeoJSON = layer.toGeoJSON();
 
         //One edit could be to multiple features
         setFeatures((prev) =>
           prev.map((f) =>
-            f.properties.id === id ? { ...f, geometry: updated.geometry } : f
+            f.properties.id === id
+              ? { ...f, geometry: updatedGeoJSON.geometry }
+              : f
           )
         );
+
+        try {
+          await fetch(`/api/features/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ geometry: updatedGeoJSON.geometry }),
+          });
+        } catch (err) {
+          console.error("Failed to update feature:", err);
+        }
       });
     });
 
-    map.on("pm:remove", (e) => {
+    map.on("pm:remove", async (e) => {
       const id = e.layer.feature?.properties?.id;
       if (!id) return;
 
       setFeatures((prev) => prev.filter((f) => f.properties.id !== id));
+
+      try {
+        await fetch(`/api/features/${id}`, { method: "DELETE" });
+      } catch (err) {
+        console.error("Failed to delete feature:", err);
+      }
     });
 
     return () => {
@@ -181,7 +156,6 @@ export default function DrawnAreas() {
           console.error("DrawnAreas: Error removing controls", error);
         }
       }
-      // map.pm.removeControls();
       map.off("pm:create");
       map.off("pm:edit");
       map.off("pm:remove");
