@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { useMap, Polygon, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 
-// Import and initialize Geoman
-if (typeof window !== "undefined") {
-  require("@geoman-io/leaflet-geoman-free");
-}
+/*
+  Importtant to undertand. The data source of truth for drawn areas is the React state. 
+  The code is mostly about syncing Leaftlet.pm polygons to our React GeoJSON data. 
+  Understand/refresh this when modifying the code.
+*/
 
-// Mock GeoJSON data with drawn areas around the specified coordinates
 const mockAreasData = {
   type: "FeatureCollection",
   features: [
@@ -85,35 +86,18 @@ const mockAreasData = {
   ],
 };
 
-// Style function based on category
 const getCategoryStyle = (category) => {
-  const categoryStyles = {
-    heritage: {
-      color: "#8B4513",
-      fillColor: "#D2691E",
-      fillOpacity: 0.4,
-      weight: 2,
-    },
-    parks: {
-      color: "#228B22",
-      fillColor: "#90EE90",
-      fillOpacity: 0.4,
-      weight: 2,
-    },
-    development: {
-      color: "#4169E1",
-      fillColor: "#87CEEB",
-      fillOpacity: 0.4,
-      weight: 2,
-    },
+  const styles = {
+    heritage: { color: "#8B4513", fillColor: "#D2691E", fillOpacity: 0.4 },
+    parks: { color: "#228B22", fillColor: "#90EE90", fillOpacity: 0.4 },
+    development: { color: "#4169E1", fillColor: "#87CEEB", fillOpacity: 0.4 },
   };
 
   return (
-    categoryStyles[category] || {
+    styles[category] ?? {
       color: "#666",
       fillColor: "#ccc",
       fillOpacity: 0.4,
-      weight: 2,
     }
   );
 };
@@ -121,33 +105,16 @@ const getCategoryStyle = (category) => {
 export default function DrawnAreas() {
   const map = useMap();
   const initializedRef = useRef(false);
-  const [drawnLayers, setDrawnLayers] = useState([]);
 
-  // Convert GeoJSON coordinates [lon, lat] to Leaflet format [lat, lon]
-  const convertCoordinates = (coordinates) => {
-    return coordinates[0].map(([lon, lat]) => [lat, lon]);
-  };
-
-  // Convert mock data to polygon positions
-  const polygons = mockAreasData.features.map((feature) => ({
-    ...feature.properties,
-    positions: convertCoordinates(feature.geometry.coordinates),
-  }));
+  const [features, setFeatures] = useState(mockAreasData.features);
 
   useEffect(() => {
     if (!map) return;
 
-    console.log("DrawnAreas: Map instance received", map);
-    console.log("DrawnAreas: map.pm available?", !!map.pm);
-
-    // Wait for map to be fully ready
     const initializeControls = () => {
       if (initializedRef.current) return;
       initializedRef.current = true;
 
-      console.log("DrawnAreas: Initializing Leaflet.pm controls");
-
-      // Enable Leaflet.pm controls
       map.pm.addControls({
         position: "topleft",
         drawCircle: false,
@@ -159,61 +126,54 @@ export default function DrawnAreas() {
       });
     };
 
-    // Initialize after a short delay to ensure map is ready
+    // Initialize after a short delay to ensure map is ready. If not controlls wont show.
     setTimeout(initializeControls, 100);
 
-    // Event handler for newly created shapes
     map.on("pm:create", (e) => {
-      const { layer } = e;
+      const layer = e.layer;
 
-      // Default properties for new shapes
+      const geojson = layer.toGeoJSON();
+
       const newFeature = {
-        id: `area-${Date.now()}`,
-        title: "New Area",
-        description: "Click to edit description",
-        category: "default",
-        createdAt: new Date().toISOString(),
+        ...geojson,
+        properties: {
+          id: `area-${Date.now()}`,
+          title: "New Area",
+          description: "Click to edit description",
+          category: "default",
+          createdAt: new Date().toISOString(),
+        },
       };
 
-      layer.feature = { properties: newFeature };
+      setFeatures((prev) => [...prev, newFeature]);
 
-      // Apply default styling
-      layer.setStyle(getCategoryStyle("default"));
-
-      // Add popup
-      const popupContent = `
-        <div>
-          <h3 style="margin: 0 0 8px 0; font-size: 16px;">${newFeature.title}</h3>
-          <p style="margin: 0 0 4px 0; font-size: 14px;">${newFeature.description}</p>
-          <p style="margin: 0; font-size: 12px; color: #666;">Category: ${newFeature.category}</p>
-        </div>
-      `;
-      layer.bindPopup(popupContent);
-
-      console.log("Created new area:", newFeature);
-      setDrawnLayers((prev) => [...prev, { layer, feature: newFeature }]);
+      layer.remove();
     });
 
-    // Event handler for edited shapes
     map.on("pm:edit", (e) => {
-      const { layer } = e;
-      if (layer.feature) {
-        console.log("Edited area:", layer.feature.properties);
-      }
+      e.layers.eachLayer((layer) => {
+        const id = layer.feature?.properties?.id;
+        if (!id) return;
+
+        const updated = layer.toGeoJSON();
+
+        //One edit could be to multiple features
+        setFeatures((prev) =>
+          prev.map((f) =>
+            f.properties.id === id ? { ...f, geometry: updated.geometry } : f
+          )
+        );
+      });
     });
 
-    // Event handler for removed shapes
     map.on("pm:remove", (e) => {
-      const { layer } = e;
-      if (layer.feature) {
-        console.log("Removed area:", layer.feature.properties);
-        setDrawnLayers((prev) => prev.filter((item) => item.layer !== layer));
-      }
+      const id = e.layer.feature?.properties?.id;
+      if (!id) return;
+
+      setFeatures((prev) => prev.filter((f) => f.properties.id !== id));
     });
 
-    // Cleanup
     return () => {
-      console.log("DrawnAreas: Cleaning up");
       if (map.pm && initializedRef.current) {
         try {
           map.pm.removeControls();
@@ -221,6 +181,7 @@ export default function DrawnAreas() {
           console.error("DrawnAreas: Error removing controls", error);
         }
       }
+      // map.pm.removeControls();
       map.off("pm:create");
       map.off("pm:edit");
       map.off("pm:remove");
@@ -229,25 +190,26 @@ export default function DrawnAreas() {
 
   return (
     <>
-      {polygons.map((polygon, index) => (
+      {features.map((feature) => (
         <Polygon
-          key={`${polygon.id}-${index}`}
-          positions={polygon.positions}
-          pathOptions={getCategoryStyle(polygon.category)}
-          pmIgnore={false}
+          key={feature.properties.id}
+          //Important: Leaflet needs [lat, lng] while GeoJSON uses [lng, lat]
+          positions={feature.geometry.coordinates[0].map(([lng, lat]) => [
+            lat,
+            lng,
+          ])}
+          pathOptions={getCategoryStyle(feature.properties.category)}
+          pmIgnore={false} //Makes my polygons editable by Leaflet.pm
+          eventHandlers={{
+            add: (e) => {
+              e.target.feature = feature; // This associates the Leaflet layer with its GeoJSON feature and is integral in edit/remove.
+            },
+          }}
         >
           <Popup>
-            <div>
-              <h3 style={{ margin: "0 0 8px 0", fontSize: "16px" }}>
-                {polygon.title}
-              </h3>
-              <p style={{ margin: "0 0 4px 0", fontSize: "14px" }}>
-                {polygon.description}
-              </p>
-              <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>
-                Category: {polygon.category}
-              </p>
-            </div>
+            <h3>{feature.properties.title}</h3>
+            <p>{feature.properties.description}</p>
+            <small>{feature.properties.category}</small>
           </Popup>
         </Polygon>
       ))}
