@@ -12,7 +12,7 @@ import "leaflet-defaulticon-compatibility"; // fixes missing marker icons
 import WMSLayer from "./MapantWMS";
 import DomaMarkers from "./DomaMarker";
 import KartOverlay from "./KartOverlay";
-import DrawnAreas from "./DrawnAreas";
+import DrawnAreas from "../drawing/DrawnAreas";
 
 export default function MapAnt() {
   return (

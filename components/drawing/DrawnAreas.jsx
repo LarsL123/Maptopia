@@ -8,7 +8,7 @@ import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 
 /*
-  Importtant to undertand. The data source of truth for drawn areas is the React state. 
+  Important to undertand. The data source of truth for drawn areas is the React state. 
   The code is mostly about syncing Leaftlet.pm polygons to our React GeoJSON data. 
   Understand/refresh this when modifying the code.
 */
