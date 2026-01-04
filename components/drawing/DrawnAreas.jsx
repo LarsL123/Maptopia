@@ -6,7 +6,7 @@ import "leaflet/dist/leaflet.css";
 import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import getCategoryStyle from "./DrawnAreaCategory";
-
+import { useDrawnFeatures } from "./DrawnFeaturesProvider";
 /*
   Important to understand. The data source of truth for drawn areas is the React state.
   The code is mostly about syncing Leaflet.pm polygons to our React GeoJSON data.
@@ -16,7 +16,7 @@ import getCategoryStyle from "./DrawnAreaCategory";
 export default function DrawnAreas() {
   const map = useMap();
   const initializedRef = useRef(false);
-  const [features, setFeatures] = useState([]);
+  const { features, setFeatures } = useDrawnFeatures();
 
   useEffect(() => {
     fetch("/api/features")

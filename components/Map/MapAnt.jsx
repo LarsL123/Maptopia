@@ -13,20 +13,30 @@ import WMSLayer from "./MapantWMS";
 import DomaMarkers from "./DomaMarker";
 import KartOverlay from "./KartOverlay";
 import DrawnAreas from "../drawing/DrawnAreas";
+import Sidebar from "../sidebar/Sidebar";
+import { DrawnFeaturesProvider } from "../drawing/DrawnFeaturesProvider";
 
 export default function MapAnt() {
   return (
-    <MapContainer
-      crs={makeCRS()}
-      center={[63.420779, 10.344897]}
-      zoom={1}
-      style={{ height: "600px", width: "100%" }}
-    >
-      <WMSLayer />
-      <KartOverlay />
-      <DomaMarkers />
-      <DrawnAreas />
-    </MapContainer>
+    <div className="flex h-[600px] w-full">
+      <DrawnFeaturesProvider>
+        <div className="flex-1">
+          <MapContainer
+            crs={makeCRS()}
+            center={[63.420779, 10.344897]}
+            zoom={1}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <WMSLayer />
+            <KartOverlay />
+            <DomaMarkers />
+            <DrawnAreas />
+          </MapContainer>
+        </div>
+
+        <Sidebar />
+      </DrawnFeaturesProvider>
+    </div>
   );
 }
 

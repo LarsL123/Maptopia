@@ -13,9 +13,15 @@ export async function PATCH(req, { params }) {
 
     const resolvedParams = await params;
 
+    // Update fields within the properties object to avoid duplicates at root level
+    const updateFields = {};
+    if (update.title !== undefined) updateFields["properties.title"] = update.title;
+    if (update.description !== undefined) updateFields["properties.description"] = update.description;
+    if (update.category !== undefined) updateFields["properties.category"] = update.category;
+
     await db
       .collection("features")
-      .updateOne({ "properties.id": resolvedParams.id }, { $set: update });
+      .updateOne({ "properties.id": resolvedParams.id }, { $set: updateFields });
 
     return new Response(JSON.stringify({ id: resolvedParams.id, ...update }), {
       status: 200,
