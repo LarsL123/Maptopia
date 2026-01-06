@@ -16,7 +16,7 @@ export default function DrawnPolygon({ setMode, setSelectedFeature }) {
           </div>
         ) : (
           features.map((feature) => (
-            <DrawnArea
+            <DrawnAreaItem
               key={feature.properties.id}
               feature={feature}
               setMode={setMode}
@@ -29,16 +29,22 @@ export default function DrawnPolygon({ setMode, setSelectedFeature }) {
   );
 }
 
-function DrawnArea({ feature, setMode, setSelectedFeature }) {
+function DrawnAreaItem({ feature, setMode, setSelectedFeature }) {
   const handleClick = () => {
     setSelectedFeature(feature);
     setMode("draw-info");
   };
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1 hover:bg-gray-200 rounded cursor-pointer">
-      <span onClick={handleClick} className="text-sm text-gray-600">
-        📄 {feature.properties.title}
+    <div className="group flex items-center justify-between gap-2 px-2 py-1 hover:bg-gray-200 rounded cursor-pointer">
+      <span className="text-sm text-gray-600">
+        {feature.properties.title}
+      </span>
+      <span
+        onClick={handleClick}
+        className="text-xs text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        edit
       </span>
     </div>
   );

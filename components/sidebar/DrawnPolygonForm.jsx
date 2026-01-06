@@ -81,9 +81,7 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
   };
 
   if (!selectedFeature) {
-    return (
-      <div className="text-sm text-gray-500">No feature selected</div>
-    );
+    return <div className="text-sm text-gray-500">No feature selected</div>;
   }
 
   return (
@@ -170,7 +168,8 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
           ID: {selectedFeature.properties.id}
         </p>
         <p className="text-xs text-gray-500">
-          Created: {new Date(selectedFeature.properties.createdAt).toLocaleDateString()}
+          Created:{" "}
+          {new Date(selectedFeature.properties.createdAt).toLocaleDateString()}
         </p>
       </div>
     </div>
