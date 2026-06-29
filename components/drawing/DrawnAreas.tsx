@@ -1,17 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, type ComponentType, type ComponentProps } from "react";
 import { useMap, Polygon, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
+import type * as L from "leaflet";
 import getCategoryStyle from "./DrawnAreaCategory";
-import { useDrawnFeatures } from "./DrawnFeaturesProvider";
+import { useDrawnFeatures, type DrawnFeature } from "./DrawnFeaturesProvider";
+
 /*
   Important to understand. The data source of truth for drawn areas is the React state.
   The code is mostly about syncing Leaflet.pm polygons to our React GeoJSON data.
   Understand/refresh this when modifying the code.
 */
+
+type SetFeatures = React.Dispatch<React.SetStateAction<DrawnFeature[]>>;
+
+interface PmLayer {
+  feature?: DrawnFeature;
+  _pmEditHandler?: L.LeafletEventHandlerFn;
+  toGeoJSON(): { geometry: DrawnFeature["geometry"] };
+  on(type: string, fn: L.LeafletEventHandlerFn): void;
+  off(type: string, fn?: L.LeafletEventHandlerFn): void;
+  remove(): void;
+}
+
+// Polygon extended with pmIgnore prop from leaflet-geoman
+const PmPolygon = Polygon as ComponentType<ComponentProps<typeof Polygon> & { pmIgnore?: boolean }>;
 
 export default function DrawnAreas() {
   const map = useMap();
@@ -21,7 +37,7 @@ export default function DrawnAreas() {
   useEffect(() => {
     fetch("/api/features")
       .then((res) => res.json())
-      .then((data) => setFeatures(data))
+      .then((data: DrawnFeature[]) => setFeatures(data))
       .catch((err) => console.error("Failed to load features:", err));
   }, []);
 
@@ -47,7 +63,6 @@ export default function DrawnAreas() {
     setTimeout(initializeControls, 100);
 
     map.on("pm:create", handleCreate(setFeatures));
-
     map.on("pm:remove", handleRemove(setFeatures));
 
     return () => {
@@ -64,14 +79,14 @@ export default function DrawnAreas() {
   }, [map]);
 
   const handleAddLayer = useCallback(
-    (feature) => (e) => {
-      const layer = e.target;
+    (feature: DrawnFeature) => (e: L.LeafletEvent) => {
+      const layer = e.target as PmLayer;
       layer.feature = feature;
 
       // Remove duplicate listeners
       layer.off("pm:edit");
 
-      const handleEdit = async () => {
+      const handleEdit: L.LeafletEventHandlerFn = async () => {
         const id = layer.feature?.properties?.id;
         if (!id) return;
 
@@ -102,25 +117,26 @@ export default function DrawnAreas() {
     [],
   );
 
-  const handleRemoveLayer = useCallback((e) => {
-    const layer = e.target;
+  const handleRemoveLayer = useCallback((e: L.LeafletEvent) => {
+    const layer = e.target as PmLayer;
     if (layer._pmEditHandler) {
       layer.off("pm:edit", layer._pmEditHandler);
       delete layer._pmEditHandler;
     }
   }, []);
+
   console.log(features);
   if (features.length > 0) {
     return (
       <>
         {features.map((feature) => (
-          <Polygon
+          <PmPolygon
             key={feature.properties.id}
             //Important: Leaflet needs [lat, lng] while GeoJSON uses [lng, lat]
             positions={feature.geometry.coordinates[0].map(([lng, lat]) => [
               lat,
               lng,
-            ])}
+            ] as [number, number])}
             pathOptions={getCategoryStyle(feature.properties.category)}
             pmIgnore={false} //Makes my polygons editable by Leaflet.pm
             eventHandlers={{
@@ -134,7 +150,7 @@ export default function DrawnAreas() {
               <p>{feature.properties.description}</p>
               <small>{feature.properties.category}</small>
             </Popup>
-          </Polygon>
+          </PmPolygon>
         ))}
       </>
     );
@@ -143,13 +159,13 @@ export default function DrawnAreas() {
   }
 }
 
-function handleCreate(setFeatures) {
-  return async (e) => {
-    const layer = e.layer;
+function handleCreate(setFeatures: SetFeatures) {
+  return async (e: L.LeafletEvent) => {
+    const layer = (e as unknown as { layer: PmLayer }).layer;
     const geojson = layer.toGeoJSON();
 
-    const newFeature = {
-      ...geojson,
+    const newFeature: DrawnFeature = {
+      type: "Feature",
       properties: {
         id: `area-${Date.now()}`,
         title: "New Area",
@@ -157,6 +173,7 @@ function handleCreate(setFeatures) {
         category: "default",
         createdAt: new Date().toISOString(),
       },
+      geometry: geojson.geometry,
     };
 
     // Optimistic update
@@ -175,9 +192,10 @@ function handleCreate(setFeatures) {
   };
 }
 
-function handleRemove(setFeatures) {
-  return async (e) => {
-    const id = e.layer.feature?.properties?.id;
+function handleRemove(setFeatures: SetFeatures) {
+  return async (e: L.LeafletEvent) => {
+    const layer = (e as unknown as { layer: { feature?: DrawnFeature } }).layer;
+    const id = layer.feature?.properties?.id;
     if (!id) return;
 
     setFeatures((prev) => prev.filter((f) => f.properties.id !== id));

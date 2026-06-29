@@ -4,6 +4,16 @@ import L from "leaflet";
 import { Marker, Popup } from "react-leaflet";
 import liveloxData from "./LiveloxData.json";
 
+type LiveloxItem = {
+  date: string;
+  link: string;
+  participantId: number;
+  center: {
+    latitude: number;
+    longitude: number;
+  };
+};
+
 const redIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
@@ -18,7 +28,7 @@ const redIcon = new L.Icon({
 export default function LiveloxMarker() {
   return (
     <>
-      {liveloxData.map((item) => (
+      {(liveloxData as LiveloxItem[]).map((item) => (
         <Marker
           key={item.participantId}
           icon={redIcon}

@@ -1,5 +1,12 @@
-const getCategoryStyle = (category) => {
-  const styles = {
+interface CategoryStyle {
+  color: string;
+  fillColor: string;
+  fillOpacity: number;
+  weight: number;
+}
+
+const getCategoryStyle = (category: string): CategoryStyle => {
+  const styles: Record<string, CategoryStyle> = {
     heritage: {
       color: "#8B4513",
       fillColor: "#D2691E",
@@ -20,7 +27,7 @@ const getCategoryStyle = (category) => {
     },
   };
   return (
-    styles[category] || {
+    styles[category] ?? {
       color: "#666",
       fillColor: "#ccc",
       fillOpacity: 0.4,

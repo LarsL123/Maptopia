@@ -1,3 +1,4 @@
+import L from "leaflet";
 import { useMap } from "react-leaflet";
 import rotatedCorners from "../../components/math";
 
@@ -7,9 +8,9 @@ function KartOverlay() {
   var overlay = L.imageOverlay
     .rotated(
       "map.png",
-      rotatedCorners[0],
-      rotatedCorners[1],
-      rotatedCorners[3], //TOP LEFT, TOP RIGHT, BOTTOM LEFT
+      rotatedCorners[0] as L.LatLngExpression,
+      rotatedCorners[1] as L.LatLngExpression,
+      rotatedCorners[3] as L.LatLngExpression, //TOP LEFT, TOP RIGHT, BOTTOM LEFT
       {
         opacity: 0.4,
         attribution:

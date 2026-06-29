@@ -1,3 +1,4 @@
+import L from "leaflet";
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 
@@ -12,8 +13,8 @@ export default function WMSLayer() {
       maxNativeZoom: 10,
       minZoom: 0,
       tileSize: 1024,
-      continuousWorld: true,
-      unloadInvisibleTiles: false,
+      // continuousWorld: true,
+      // unloadInvisibleTiles: false,
       attribution:
         "Basert p&aring; FKB og laserdata &copy; Statens Kartverk, Geovekst og kommunene.<br/>Med st&oslash;tte fra Sparebankstiftelsen DNB.",
     }).addTo(map);

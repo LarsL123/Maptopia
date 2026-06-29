@@ -42,7 +42,7 @@ export default function MapAnt() {
   );
 }
 
-function makeCRS() {
+function makeCRS(): L.CRS {
   var res = [
     8000 / 8,
     8000 / 16,

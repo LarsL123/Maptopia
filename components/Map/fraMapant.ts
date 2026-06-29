@@ -1,11 +1,12 @@
+// @ts-nocheck
 
-    
+
     var snap_sensitivity=200;
     var snap_sizes=[ [2100,2970], [2970,2100],[2100*.75,2970*.75], [2970*.75,2100*.75],[2100*.5,2970*.5], [2970*.5,2100*.5] ];
     var snap_names=['A4 portrait 1:10.000','A4 landscape 1:10.000','A4 portrait 1:7.500','A4 landscape 1:7.500','A4 portrait 1:5.000','A4 landscape 1:5.000'];
     var currentexport=null;
     var markers_reported = L.layerGroup();
-    
+
   function createMap(){
       var res = [
 	  8000 / 8,
@@ -17,7 +18,7 @@
 		8000 / 512,
 		8000 / 1024,
 		8000 / 2048,
-		8000 / 4096,	
+		8000 / 4096,
 	  8000 / 8192,
 		8000 / 16384
       ]; console.log(res);
@@ -46,7 +47,7 @@
 	maxNativeZoom: 10,
 	minZoom: 0,
 	tileSize: 1024,
-	continuousWorld: true, 
+	continuousWorld: true,
 	unloadInvisibleTiles: false,
 	attribution: 'Basert p&aring; FKB og laserdata &copy; Statens Kartverk, Geovekst og kommunene.<br/>Med st&oslash;tte fra Sparebankstiftelsen DNB.'
     }).addTo(map);
@@ -61,7 +62,7 @@
 	  position: 'topleft'
       }).addTo(map)
 
-      
+
       var popup = L.popup();
 
 
@@ -139,10 +140,10 @@
 	  var viewportdl = "<br/><br/><li><a download title=\"Download viewport (takes up to 20 seconds)\" href=\"https://mapant.no/api/extract-png?"+boundspar+"\">Download png</a> "+
 	      " and <a download href=\"https://mapant.no/api/extract-pgw?"+boundspar+"\">pgw</a> of viewport</a>";
 	  if (map.getZoom()<9) { viewportdl=""; }
-	  
+
 	  popup
 	      .setLatLng(e.latlng)
-	  
+
 	      .setContent("Location " + e.latlng +"<br/>UTM33 (x,y): " + Math.round(utm.x)+" "+Math.round(utm.y)+
 			  "<p><ul>"+
 			  "<li><a href=\""+url+"\">Link here</a>"+
@@ -157,12 +158,12 @@
 
 			   "<li><a href=\"#\" onclick=\"return postCmd(this,'/api/report?x="+x+"&amp;y="+y+"')\">There is something wrong with this tile</a>"+
 			   "<li><a href=\"#\" onclick=\"return postCmd(this,'/api/report-fixed?x="+x+"&amp;y="+y+"')\">Nothing wrong with this tile</a>"+
-			  
+
 			  "<li><a target=\"_blank\" href=\""+
 			  "https://docs.google.com/forms/d/e/1FAIpQLSeGFhTRvldxtNkQAtNQCDmdNz9EuEFehCVG--kcdRpAqa0coQ/viewform?usp=pp_url&entry.276133580="+encodeURIComponent(url)+"\">General feedback</a>" +
 
 			  "<div id=\"spinner-id\" ><img src=\"spinner.gif\" width=\"50\" height=\"50\"></div>"+
-			  
+
 			  "</p>"
 			 )
 	      .openOn(map);
