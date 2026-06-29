@@ -2,6 +2,7 @@
 
 import { Marker, Popup } from "react-leaflet";
 
+//Up to date as per 09/01/24
 export const domaCoordinates = {
   12023: {
     lat: 37.05004826388889,

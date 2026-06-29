@@ -2,17 +2,33 @@
 
 import React from "react";
 import { useDrawnFeatures } from "../drawing/DrawnFeaturesProvider";
+import type { DrawnFeature, SidebarMode } from "../types";
 
-export default function DrawnPolygonForm({ selectedFeature, setMode }) {
-  const { setFeatures } = useDrawnFeatures();
-  const [formData, setFormData] = React.useState({
+interface DrawnPolygonFormProps {
+  selectedFeature: DrawnFeature | null;
+  setMode: (mode: SidebarMode) => void;
+}
+
+interface FormData {
+  title: string;
+  description: string;
+  category: string;
+}
+
+export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPolygonFormProps) {
+  const { setFeatures } = useDrawnFeatures() as {
+    setFeatures: React.Dispatch<React.SetStateAction<DrawnFeature[]>>;
+  };
+  const [formData, setFormData] = React.useState<FormData>({
     title: selectedFeature?.properties?.title || "",
     description: selectedFeature?.properties?.description || "",
     category: selectedFeature?.properties?.category || "default",
   });
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -22,7 +38,7 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
 
     setIsSaving(true);
 
-    const updatedFeature = {
+    const updatedFeature: DrawnFeature = {
       ...selectedFeature,
       properties: {
         ...selectedFeature.properties,
@@ -30,14 +46,12 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
       },
     };
 
-    // Update local state
     setFeatures((prev) =>
       prev.map((f) =>
         f.properties.id === selectedFeature.properties.id ? updatedFeature : f
       )
     );
 
-    // Update backend
     try {
       await fetch(`/api/features/${selectedFeature.properties.id}`, {
         method: "PATCH",
@@ -62,12 +76,10 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
 
     setIsSaving(true);
 
-    // Update local state
     setFeatures((prev) =>
       prev.filter((f) => f.properties.id !== selectedFeature.properties.id)
     );
 
-    // Delete from backend
     try {
       await fetch(`/api/features/${selectedFeature.properties.id}`, {
         method: "DELETE",
@@ -86,7 +98,6 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => setMode("draw")}
@@ -98,7 +109,6 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
 
       <h3 className="text-sm font-semibold text-gray-800">Edit Area</h3>
 
-      {/* Form Fields */}
       <div className="space-y-3">
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -144,7 +154,6 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-2">
         <button
           onClick={handleSave}
@@ -162,7 +171,6 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }) {
         </button>
       </div>
 
-      {/* Feature Info */}
       <div className="pt-3 border-t border-gray-300">
         <p className="text-xs text-gray-500">
           ID: {selectedFeature.properties.id}

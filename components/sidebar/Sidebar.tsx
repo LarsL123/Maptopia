@@ -5,14 +5,21 @@ import DrawnPolygon from "./DrawnPolygon";
 import DrawnPolygonForm from "./DrawnPolygonForm";
 import FolderItem from "./FolderItem";
 import FileItem from "./FileItem";
+import type { DrawnFeature, SidebarMode } from "../types";
+
+interface ModeIconProps {
+  icon: string;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}
 
 export default function Sidebar() {
-  const [mode, setMode] = React.useState("layers");
-  const [selectedFeature, setSelectedFeature] = React.useState(null);
+  const [mode, setMode] = React.useState<SidebarMode>("layers");
+  const [selectedFeature, setSelectedFeature] = React.useState<DrawnFeature | null>(null);
 
   return (
     <div className="w-64 bg-gray-100 border-l border-gray-300 overflow-y-auto flex flex-col">
-      {/* Mode Switcher Icons */}
       <div className="flex border-b border-gray-300 bg-gray-200">
         <ModeIcon
           icon="🗺️"
@@ -40,7 +47,6 @@ export default function Sidebar() {
         />
       </div>
 
-      {/* Content Area */}
       <div className="flex-1 p-4 overflow-y-auto">
         {mode === "layers" && <LayersContent />}
         {mode === "data" && <DataContent />}
@@ -61,8 +67,7 @@ export default function Sidebar() {
   );
 }
 
-// Mode Icon Component
-function ModeIcon({ icon, label, isActive, onClick }) {
+function ModeIcon({ icon, label, isActive, onClick }: ModeIconProps) {
   return (
     <button
       onClick={onClick}
@@ -79,7 +84,6 @@ function ModeIcon({ icon, label, isActive, onClick }) {
   );
 }
 
-// Content Components for different modes
 function LayersContent() {
   return (
     <div className="space-y-1">

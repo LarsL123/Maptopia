@@ -1,9 +1,25 @@
-import FolderItem from "./FolderItem";
-import FileItem from "./FileItem";
-import { useDrawnFeatures } from "../drawing/DrawnFeaturesProvider";
+"use client";
 
-export default function DrawnPolygon({ setMode, setSelectedFeature }) {
-  const { features } = useDrawnFeatures();
+import FolderItem from "./FolderItem";
+import { useDrawnFeatures } from "../drawing/DrawnFeaturesProvider";
+import type { DrawnFeature, SidebarMode } from "../types";
+
+interface DrawnPolygonProps {
+  setMode: (mode: SidebarMode) => void;
+  setSelectedFeature: (feature: DrawnFeature | null) => void;
+}
+
+interface DrawnAreaItemProps {
+  feature: DrawnFeature;
+  setMode: (mode: SidebarMode) => void;
+  setSelectedFeature: (feature: DrawnFeature | null) => void;
+}
+
+export default function DrawnPolygon({
+  setMode,
+  setSelectedFeature,
+}: DrawnPolygonProps) {
+  const { features } = useDrawnFeatures() as { features: DrawnFeature[] };
 
   return (
     <div className="space-y-1">
@@ -29,7 +45,11 @@ export default function DrawnPolygon({ setMode, setSelectedFeature }) {
   );
 }
 
-function DrawnAreaItem({ feature, setMode, setSelectedFeature }) {
+function DrawnAreaItem({
+  feature,
+  setMode,
+  setSelectedFeature,
+}: DrawnAreaItemProps) {
   const handleClick = () => {
     setSelectedFeature(feature);
     setMode("draw-info");
@@ -37,9 +57,7 @@ function DrawnAreaItem({ feature, setMode, setSelectedFeature }) {
 
   return (
     <div className="group flex items-center justify-between gap-2 px-2 py-1 hover:bg-gray-200 rounded cursor-pointer">
-      <span className="text-sm text-gray-600">
-        {feature.properties.title}
-      </span>
+      <span className="text-sm text-gray-600">{feature.properties.title}</span>
       <span
         onClick={handleClick}
         className="text-xs text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"

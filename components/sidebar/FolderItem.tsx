@@ -2,7 +2,13 @@
 
 import React from "react";
 
-export default function FolderItem({ label, children, defaultOpen = false }) {
+interface FolderItemProps {
+  label: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+export default function FolderItem({ label, children, defaultOpen = false }: FolderItemProps) {
   const [isOpen, setIsOpen] = React.useState(defaultOpen);
 
   return (

@@ -11,6 +11,7 @@ import "leaflet-defaulticon-compatibility"; // fixes missing marker icons
 
 import WMSLayer from "./MapantWMS";
 import DomaMarkers from "./DomaMarker";
+import LiveloxMarker from "./LiveloxMarker";
 import KartOverlay from "./KartOverlay";
 import DrawnAreas from "../drawing/DrawnAreas";
 import Sidebar from "../sidebar/Sidebar";
@@ -18,7 +19,7 @@ import { DrawnFeaturesProvider } from "../drawing/DrawnFeaturesProvider";
 
 export default function MapAnt() {
   return (
-    <div className="flex h-[600px] w-full">
+    <div className="flex h-[1000px] w-full">
       <DrawnFeaturesProvider>
         <div className="flex-1">
           <MapContainer
@@ -30,6 +31,7 @@ export default function MapAnt() {
             <WMSLayer />
             <KartOverlay />
             <DomaMarkers />
+            <LiveloxMarker />
             <DrawnAreas />
           </MapContainer>
         </div>
@@ -63,6 +65,6 @@ function makeCRS() {
       resolutions: res,
       origin: [-150000, 10000000],
       bounds: L.bounds([-100000, 8000000], [1280252, 6400000]),
-    }
+    },
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useMap, Polygon, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "@geoman-io/leaflet-geoman-free";
@@ -81,8 +81,8 @@ export default function DrawnAreas() {
           prev.map((f) =>
             f.properties.id === id
               ? { ...f, geometry: updatedGeoJSON.geometry }
-              : f
-          )
+              : f,
+          ),
         );
 
         try {
@@ -99,7 +99,7 @@ export default function DrawnAreas() {
       layer.on("pm:edit", handleEdit);
       layer._pmEditHandler = handleEdit;
     },
-    []
+    [],
   );
 
   const handleRemoveLayer = useCallback((e) => {
@@ -109,34 +109,38 @@ export default function DrawnAreas() {
       delete layer._pmEditHandler;
     }
   }, []);
-
-  return (
-    <>
-      {features.map((feature) => (
-        <Polygon
-          key={feature.properties.id}
-          //Important: Leaflet needs [lat, lng] while GeoJSON uses [lng, lat]
-          positions={feature.geometry.coordinates[0].map(([lng, lat]) => [
-            lat,
-            lng,
-          ])}
-          pathOptions={getCategoryStyle(feature.properties.category)}
-          pmIgnore={false} //Makes my polygons editable by Leaflet.pm
-          eventHandlers={{
-            //Had to be done here because I didn't get map.on("pm:edit") to work.
-            add: handleAddLayer(feature),
-            remove: handleRemoveLayer,
-          }}
-        >
-          <Popup>
-            <h3>{feature.properties.title}</h3>
-            <p>{feature.properties.description}</p>
-            <small>{feature.properties.category}</small>
-          </Popup>
-        </Polygon>
-      ))}
-    </>
-  );
+  console.log(features);
+  if (features.length > 0) {
+    return (
+      <>
+        {features.map((feature) => (
+          <Polygon
+            key={feature.properties.id}
+            //Important: Leaflet needs [lat, lng] while GeoJSON uses [lng, lat]
+            positions={feature.geometry.coordinates[0].map(([lng, lat]) => [
+              lat,
+              lng,
+            ])}
+            pathOptions={getCategoryStyle(feature.properties.category)}
+            pmIgnore={false} //Makes my polygons editable by Leaflet.pm
+            eventHandlers={{
+              //Had to be done here because I didn't get map.on("pm:edit") to work.
+              add: handleAddLayer(feature),
+              remove: handleRemoveLayer,
+            }}
+          >
+            <Popup>
+              <h3>{feature.properties.title}</h3>
+              <p>{feature.properties.description}</p>
+              <small>{feature.properties.category}</small>
+            </Popup>
+          </Polygon>
+        ))}
+      </>
+    );
+  } else {
+    return "";
+  }
 }
 
 function handleCreate(setFeatures) {
