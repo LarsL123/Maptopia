@@ -1,5 +1,9 @@
 Welcome to Maptopia, a project for displaying map information linked to orienteering.
 
+## Generating types when databse is changed:
+
+npx supabase gen types typescript --project-id nmhmyvsuhtalbqczpqld > types/supabase.ts
+
 ## Fetaures roadmap
 
 - Livelox pos icons
