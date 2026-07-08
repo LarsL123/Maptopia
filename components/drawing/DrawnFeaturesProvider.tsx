@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { DrawnFeature } from "../types";
+import { DrawnFeature } from "../../types/features";
 
 interface DrawnFeaturesContextValue {
   features: DrawnFeature[];

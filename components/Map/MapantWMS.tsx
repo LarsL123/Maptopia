@@ -6,6 +6,8 @@ export default function WMSLayer() {
   const map = useMap();
 
   useEffect(() => {
+    if (!map) return;
+
     var templateUrl = "https://mapant.no/tiles/{z}/{y}/{x}.png";
 
     var mapantLayer = new L.TileLayer(templateUrl, {

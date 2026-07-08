@@ -11,6 +11,8 @@
   "dependencies": {
     "@alcalin/leaflet-tilelayer-wmts": "^2.0.2",
     "@geoman-io/leaflet-geoman-free": "^2.19.0",
+    "@supabase/auth-ui-react": "^0.4.7",
+    "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.110.0",
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",

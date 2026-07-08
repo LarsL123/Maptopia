@@ -1141,6 +1141,12 @@ export default function DomaMarkers() {
             <div>
               <strong>Doma ID: {id}</strong>
               <br />
+              <a
+                href={`https://doma.huoghei.com/show_map.php?user=larslien&map=${id}`}
+              >
+                Link
+              </a>
+              <br />
               Lat: {coords.lat.toFixed(6)}
               <br />
               Lon: {coords.lon.toFixed(6)}

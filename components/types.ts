@@ -1,18 +1,4 @@
 export type SidebarMode = "layers" | "data" | "draw" | "draw-info";
 
-export interface DrawnFeatureProperties {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  createdAt: string;
-}
-
-export interface DrawnFeature {
-  type: "Feature";
-  geometry: {
-    type: string;
-    coordinates: unknown;
-  };
-  properties: DrawnFeatureProperties;
-}
+// Re-export the canonical feature types so component imports stay short.
+export type { DrawnFeature, FeatureProperties } from "../types/features";

@@ -19,7 +19,7 @@ import { DrawnFeaturesProvider } from "../drawing/DrawnFeaturesProvider";
 
 export default function MapAnt() {
   return (
-    <div className="flex h-[1000px] w-full">
+    <div className="flex h-[600px] w-full">
       <DrawnFeaturesProvider>
         <div className="flex-1">
           <MapContainer

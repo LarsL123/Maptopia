@@ -29,6 +29,9 @@ export interface DrawnFeature {
   type: "Feature";
   geometry: GeoJSONGeometry;
   properties: {
+    // Duplicated from the top-level id because the map/sidebar components key
+    // off feature.properties.id.
+    id: DBFeature["id"];
     title: DBFeature["title"];
     description: DBFeature["description"];
     category: DBFeature["category"];

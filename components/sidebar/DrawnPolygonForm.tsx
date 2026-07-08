@@ -2,6 +2,8 @@
 
 import React from "react";
 import { useDrawnFeatures } from "../drawing/DrawnFeaturesProvider";
+import { useAuth } from "../auth/AuthProvider";
+import { updateFeature, deleteFeature } from "../../lib/features";
 import type { DrawnFeature, SidebarMode } from "../types";
 
 interface DrawnPolygonFormProps {
@@ -19,6 +21,7 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPoly
   const { setFeatures } = useDrawnFeatures() as {
     setFeatures: React.Dispatch<React.SetStateAction<DrawnFeature[]>>;
   };
+  const { session } = useAuth();
   const [formData, setFormData] = React.useState<FormData>({
     title: selectedFeature?.properties?.title || "",
     description: selectedFeature?.properties?.description || "",
@@ -46,25 +49,21 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPoly
       },
     };
 
-    setFeatures((prev) =>
-      prev.map((f) =>
-        f.properties.id === selectedFeature.properties.id ? updatedFeature : f
-      )
-    );
-
     try {
-      await fetch(`/api/features/${selectedFeature.properties.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-        }),
+      await updateFeature(selectedFeature.properties.id, {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
       });
+      setFeatures((prev) =>
+        prev.map((f) =>
+          f.properties.id === selectedFeature.properties.id ? updatedFeature : f
+        )
+      );
       setMode("draw");
     } catch (err) {
       console.error("Failed to update feature:", err);
+      alert("Failed to save. Are you signed in as the owner of this area?");
     } finally {
       setIsSaving(false);
     }
@@ -76,17 +75,15 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPoly
 
     setIsSaving(true);
 
-    setFeatures((prev) =>
-      prev.filter((f) => f.properties.id !== selectedFeature.properties.id)
-    );
-
     try {
-      await fetch(`/api/features/${selectedFeature.properties.id}`, {
-        method: "DELETE",
-      });
+      await deleteFeature(selectedFeature.properties.id);
+      setFeatures((prev) =>
+        prev.filter((f) => f.properties.id !== selectedFeature.properties.id)
+      );
       setMode("draw");
     } catch (err) {
       console.error("Failed to delete feature:", err);
+      alert("Failed to delete. Are you signed in as the owner of this area?");
     } finally {
       setIsSaving(false);
     }
@@ -154,17 +151,23 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPoly
         </div>
       </div>
 
+      {!session && (
+        <p className="text-xs text-amber-600">
+          Sign in to edit or delete areas.
+        </p>
+      )}
+
       <div className="flex gap-2">
         <button
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || !session}
           className="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? "Saving..." : "Save"}
         </button>
         <button
           onClick={handleDelete}
-          disabled={isSaving}
+          disabled={isSaving || !session}
           className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Delete
