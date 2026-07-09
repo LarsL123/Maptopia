@@ -5,11 +5,6 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "./AuthProvider";
 
-/*
-  Email/password sign in + sign up. When signed out this renders the Supabase
-  Auth UI form (with a "Don't have an account? Sign up" link); when signed in
-  it shows the user's email and a sign-out button.
-*/
 export default function AuthPanel() {
   const { session, loading, signOut } = useAuth();
 

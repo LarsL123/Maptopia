@@ -12,6 +12,7 @@ import "leaflet/dist/leaflet.css";
 import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import type * as L from "leaflet";
+
 import getCategoryStyle from "./DrawnAreaCategory";
 import { useDrawnFeatures } from "./DrawnFeaturesProvider";
 import { useAuth } from "../auth/AuthProvider";
@@ -190,6 +191,7 @@ function handleCreate(setFeatures: SetFeatures) {
         description: "Click to edit",
         category: "default",
         createdAt: new Date().toISOString(),
+        dynamicProperties: {},
       },
       geometry: geojson.geometry,
     };

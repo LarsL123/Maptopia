@@ -1,7 +1,6 @@
 import { Database } from "./supabase";
 
 type DBFeature = Database["public"]["Tables"]["features"]["Row"];
-type DBFeatureInsert = Database["public"]["Tables"]["features"]["Insert"];
 
 // ── GeoJSON geometry types ────────────────────────────────────────────────────
 
@@ -13,46 +12,23 @@ export type GeoJSONGeometry =
   | { type: "MultiLineString"; coordinates: [number, number][][] }
   | { type: "MultiPolygon"; coordinates: [number, number][][][] };
 
-// ── Dynamic / extra properties stored in the JSONB column ────────────────────
+// Dynamic / extra properties stored in the JSONB column
+// Schemaless — keys and shapes vary per feature and are read dynamically.
+export type DynamicProperties = Record<string, unknown>;
 
-export interface FeatureProperties {
-  tags?: string[];
-  difficulty?: "easy" | "medium" | "hard";
-  elevationGain?: number;
-  [key: string]: unknown;
-}
-
-// ── What the API returns to the frontend (standard GeoJSON Feature) ───────────
-
+//This is structured in this way to saty compliant with the GeoJSON standard.
 export interface DrawnFeature {
   id: DBFeature["id"];
   type: "Feature";
   geometry: GeoJSONGeometry;
   properties: {
     // Duplicated from the top-level id because the map/sidebar components key
-    // off feature.properties.id.
+    // off feature.properties.id. //TODO Change
     id: DBFeature["id"];
     title: DBFeature["title"];
     description: DBFeature["description"];
     category: DBFeature["category"];
     createdAt: DBFeature["created_at"];
-  } & FeatureProperties;
-}
-
-// ── POST body ─────────────────────────────────────────────────────────────────
-
-export interface CreateFeatureBody {
-  title: DBFeatureInsert["title"];
-  description?: DBFeatureInsert["description"];
-  category: DBFeatureInsert["category"];
-  geometry: GeoJSONGeometry;
-  properties?: FeatureProperties;
-}
-
-// ── PATCH body ────────────────────────────────────────────────────────────────
-
-export interface UpdateFeatureBody {
-  title?: string;
-  description?: string;
-  category?: string;
+    dynamicProperties: DynamicProperties;
+  };
 }

@@ -1,18 +1,12 @@
 import { supabase } from "./supabase";
+import { Database } from "../types/supabase";
+
 import type {
-  CreateFeatureBody,
   DrawnFeature,
-  FeatureProperties,
+  DynamicProperties,
   GeoJSONGeometry,
-  UpdateFeatureBody,
 } from "../types/features";
 import type { Json } from "../types/supabase";
-
-/*
-  Direct Supabase access from the browser. Writes are protected by RLS
-  (insert/update/delete require an authenticated user owning the row),
-  reads are public.
-*/
 
 interface FeatureRow {
   id: string;
@@ -24,19 +18,35 @@ interface FeatureRow {
   properties: Json;
 }
 
+type DBFeatureInsert = Database["public"]["Tables"]["features"]["Insert"];
+
+export interface CreateFeatureBody {
+  title: DBFeatureInsert["title"];
+  description?: DBFeatureInsert["description"];
+  category: DBFeatureInsert["category"];
+  geometry: GeoJSONGeometry;
+  dynamicProperties?: DynamicProperties;
+}
+
+export interface UpdateFeatureBody {
+  title?: string;
+  description?: string;
+  category?: string;
+  dynamicProperties?: DynamicProperties;
+}
+
 function rowToFeature(row: FeatureRow): DrawnFeature {
   return {
     id: row.id,
     type: "Feature",
     geometry: row.geometry as GeoJSONGeometry,
     properties: {
-      // Spread the jsonb extras first so the canonical columns win.
-      ...((row.properties ?? {}) as FeatureProperties),
       id: row.id,
       title: row.title,
       description: row.description,
       category: row.category,
       createdAt: row.created_at,
+      dynamicProperties: (row.properties ?? {}) as DynamicProperties,
     },
   };
 }
@@ -66,7 +76,7 @@ export async function createFeature(
     p_description: input.description ?? "",
     p_category: input.category,
     p_geometry: input.geometry as unknown as Json,
-    p_properties: (input.properties ?? {}) as Json,
+    p_properties: (input.dynamicProperties ?? {}) as Json,
   });
 
   if (error) throw error;
@@ -79,15 +89,23 @@ export async function updateFeature(
   id: string,
   patch: UpdateFeatureBody,
 ): Promise<void> {
+  const { dynamicProperties, ...columns } = patch;
+
   const { data, error } = await supabase
     .from("features")
-    .update(patch)
+    .update({
+      ...columns,
+      // Omit the column entirely when dynamicProperties isn't given, so the
+      // existing JSONB value is left untouched rather than cleared.
+      ...(dynamicProperties !== undefined && {
+        properties: dynamicProperties as Json,
+      }),
+    })
     .eq("id", id)
     .select("id");
 
   if (error) throw error;
-  // RLS filters out rows you don't own, so a blocked update reports success
-  // with zero rows — surface that as an error.
+  //Zero rows returned means nothing was done, but wont throw error.
   if (!data || data.length === 0)
     throw new Error("Update was rejected — you may not own this feature.");
 }
