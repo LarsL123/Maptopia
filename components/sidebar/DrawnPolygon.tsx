@@ -2,7 +2,8 @@
 
 import FolderItem from "./FolderItem";
 import { useDrawnFeatures } from "../drawing/DrawnFeaturesProvider";
-import type { DrawnFeature, SidebarMode } from "../types";
+import type { DrawnFeature } from "../../types/features";
+import type { SidebarMode } from "./Sidebar";
 
 interface DrawnPolygonProps {
   setMode: (mode: SidebarMode) => void;

@@ -5,7 +5,7 @@ import { AuthProvider } from "../components/auth/AuthProvider";
 import AuthPanel from "../components/auth/AuthPanel";
 
 // Dynamically import the Map component
-const MapAnt = dynamic(() => import("../components/Map/MapAnt"), {
+const MapAnt = dynamic(() => import("../components/map/MapAnt"), {
   ssr: false,
 });
 

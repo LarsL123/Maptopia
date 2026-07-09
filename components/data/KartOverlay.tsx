@@ -1,6 +1,6 @@
 import L from "leaflet";
 import { useMap } from "react-leaflet";
-import rotatedCorners from "../../components/math";
+import rotatedCorners from "../math";
 
 function KartOverlay() {
   const map = useMap();
@@ -15,7 +15,7 @@ function KartOverlay() {
         opacity: 0.4,
         attribution:
           "&copy; <a href='http://www.ign.es'>Instituto Geográfico Nacional de España</a>",
-      }
+      },
     )
     .addTo(map);
 

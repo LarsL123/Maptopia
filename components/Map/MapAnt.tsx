@@ -10,35 +10,48 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import "leaflet-defaulticon-compatibility"; // fixes missing marker icons
 
 import WMSLayer from "./MapantWMS";
-import DomaMarkers from "./DomaMarker";
-import LiveloxMarker from "./LiveloxMarker";
-import KartOverlay from "./KartOverlay";
+import DomaMarkers from "../data/DomaMarker";
+import LiveloxMarker from "../data/LiveloxMarker";
+import KartOverlay from "../data/KartOverlay";
 import DrawnAreas from "../drawing/DrawnAreas";
 import Sidebar from "../sidebar/Sidebar";
 import { DrawnFeaturesProvider } from "../drawing/DrawnFeaturesProvider";
+import { DataLayersProvider, useDataLayers } from "../data/DataLayersProvider";
 
 export default function MapAnt() {
   return (
     <div className="flex h-[600px] w-full">
       <DrawnFeaturesProvider>
-        <div className="flex-1">
-          <MapContainer
-            crs={makeCRS()}
-            center={[63.420779, 10.344897]}
-            zoom={1}
-            style={{ height: "100%", width: "100%" }}
-          >
-            <WMSLayer />
-            <KartOverlay />
-            <DomaMarkers />
-            <LiveloxMarker />
-            <DrawnAreas />
-          </MapContainer>
-        </div>
+        <DataLayersProvider>
+          <div className="flex-1">
+            <MapContainer
+              crs={makeCRS()}
+              center={[63.420779, 10.344897]}
+              zoom={1}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <WMSLayer />
+              <KartOverlay />
+              <DataMarkers />
+              <DrawnAreas />
+            </MapContainer>
+          </div>
 
-        <Sidebar />
+          <Sidebar />
+        </DataLayersProvider>
       </DrawnFeaturesProvider>
     </div>
+  );
+}
+
+function DataMarkers() {
+  const { showDomaMarkers, showLiveloxMarkers } = useDataLayers();
+
+  return (
+    <>
+      {showDomaMarkers && <DomaMarkers />}
+      {showLiveloxMarkers && <LiveloxMarker />}
+    </>
   );
 }
 

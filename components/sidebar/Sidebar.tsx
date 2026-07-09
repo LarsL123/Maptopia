@@ -5,7 +5,8 @@ import DrawnPolygon from "./DrawnPolygon";
 import DrawnPolygonForm from "./DrawnPolygonForm";
 import FolderItem from "./FolderItem";
 import FileItem from "./FileItem";
-import type { DrawnFeature, SidebarMode } from "../types";
+import type { DrawnFeature } from "../../types/features";
+import { useDataLayers } from "../data/DataLayersProvider";
 
 interface ModeIconProps {
   icon: string;
@@ -14,9 +15,12 @@ interface ModeIconProps {
   onClick: () => void;
 }
 
+export type SidebarMode = "layers" | "data" | "draw" | "draw-info";
+
 export default function Sidebar() {
   const [mode, setMode] = React.useState<SidebarMode>("layers");
-  const [selectedFeature, setSelectedFeature] = React.useState<DrawnFeature | null>(null);
+  const [selectedFeature, setSelectedFeature] =
+    React.useState<DrawnFeature | null>(null);
 
   return (
     <div className="w-64 bg-gray-100 border-l border-gray-300 overflow-y-auto flex flex-col">
@@ -92,26 +96,32 @@ function LayersContent() {
         <FileItem label="WMS Layer" />
         <FileItem label="Kart Overlay" />
       </FolderItem>
-      <FolderItem label="Markers">
-        <FileItem label="Doma Markers" />
-        <FileItem label="Custom Markers" />
-      </FolderItem>
     </div>
   );
 }
 
 function DataContent() {
+  const {
+    showDomaMarkers,
+    showLiveloxMarkers,
+    setShowDomaMarkers,
+    setShowLiveloxMarkers,
+  } = useDataLayers();
+
   return (
     <div className="space-y-1">
       <h3 className="text-sm font-semibold mb-2 text-gray-800">Data Sources</h3>
-      <FolderItem label="Datasets" defaultOpen>
-        <FileItem label="Population Data" />
-        <FileItem label="Land Use" />
-        <FileItem label="Elevation" />
-      </FolderItem>
-      <FolderItem label="Analytics">
-        <FileItem label="Statistics" />
-        <FileItem label="Reports" />
+      <FolderItem label="Markers" defaultOpen>
+        <FileItem
+          label="Doma Markers"
+          checked={showDomaMarkers}
+          onToggle={() => setShowDomaMarkers((v) => !v)}
+        />
+        <FileItem
+          label="Livelox Markers"
+          checked={showLiveloxMarkers}
+          onToggle={() => setShowLiveloxMarkers((v) => !v)}
+        />
       </FolderItem>
     </div>
   );

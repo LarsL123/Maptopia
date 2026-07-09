@@ -4,7 +4,8 @@ import React from "react";
 import { useDrawnFeatures } from "../drawing/DrawnFeaturesProvider";
 import { useAuth } from "../auth/AuthProvider";
 import { updateFeature, deleteFeature } from "../../lib/features";
-import type { DrawnFeature, SidebarMode } from "../types";
+import type { DrawnFeature } from "../../types/features";
+import type { SidebarMode } from "./Sidebar";
 
 interface DrawnPolygonFormProps {
   selectedFeature: DrawnFeature | null;
@@ -17,7 +18,10 @@ interface FormData {
   category: string;
 }
 
-export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPolygonFormProps) {
+export default function DrawnPolygonForm({
+  selectedFeature,
+  setMode,
+}: DrawnPolygonFormProps) {
   const { setFeatures } = useDrawnFeatures() as {
     setFeatures: React.Dispatch<React.SetStateAction<DrawnFeature[]>>;
   };
@@ -30,7 +34,9 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPoly
   const [isSaving, setIsSaving] = React.useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -57,8 +63,10 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPoly
       });
       setFeatures((prev) =>
         prev.map((f) =>
-          f.properties.id === selectedFeature.properties.id ? updatedFeature : f
-        )
+          f.properties.id === selectedFeature.properties.id
+            ? updatedFeature
+            : f,
+        ),
       );
       setMode("draw");
     } catch (err) {
@@ -78,7 +86,7 @@ export default function DrawnPolygonForm({ selectedFeature, setMode }: DrawnPoly
     try {
       await deleteFeature(selectedFeature.properties.id);
       setFeatures((prev) =>
-        prev.filter((f) => f.properties.id !== selectedFeature.properties.id)
+        prev.filter((f) => f.properties.id !== selectedFeature.properties.id),
       );
       setMode("draw");
     } catch (err) {
