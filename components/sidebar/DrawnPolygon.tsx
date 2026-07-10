@@ -16,32 +16,60 @@ interface DrawnAreaItemProps {
   setSelectedFeature: (feature: DrawnFeature | null) => void;
 }
 
+function groupByCategory(
+  features: DrawnFeature[],
+): { label: string; features: DrawnFeature[] }[] {
+  const groups = new Map<string, { label: string; features: DrawnFeature[] }>();
+
+  for (const feature of features) {
+    const category = feature.properties.category || "default";
+    const key = category.toLowerCase();
+    const group = groups.get(key);
+    if (group) {
+      group.features.push(feature);
+    } else {
+      groups.set(key, { label: category, features: [feature] });
+    }
+  }
+
+  return Array.from(groups.values()).sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
+}
+
 export default function DrawnPolygon({
   setMode,
   setSelectedFeature,
 }: DrawnPolygonProps) {
   const { features } = useDrawnFeatures() as { features: DrawnFeature[] };
+  const groups = groupByCategory(features);
 
   return (
     <div className="space-y-1">
       <h3 className="text-sm font-semibold mb-2 text-gray-800">Drawn Areas</h3>
 
-      <FolderItem label={`My Drawings (${features.length})`} defaultOpen>
-        {features.length === 0 ? (
-          <div className="px-2 py-1 text-xs text-gray-500 italic">
-            No drawings yet
-          </div>
-        ) : (
-          features.map((feature) => (
-            <DrawnAreaItem
-              key={feature.properties.id}
-              feature={feature}
-              setMode={setMode}
-              setSelectedFeature={setSelectedFeature}
-            />
-          ))
-        )}
-      </FolderItem>
+      {features.length === 0 ? (
+        <div className="px-2 py-1 text-xs text-gray-500 italic">
+          No drawings yet
+        </div>
+      ) : (
+        groups.map((group) => (
+          <FolderItem
+            key={group.label}
+            label={`${group.label.charAt(0).toUpperCase() + group.label.slice(1)} (${group.features.length})`}
+            defaultOpen
+          >
+            {group.features.map((feature) => (
+              <DrawnAreaItem
+                key={feature.properties.id}
+                feature={feature}
+                setMode={setMode}
+                setSelectedFeature={setSelectedFeature}
+              />
+            ))}
+          </FolderItem>
+        ))
+      )}
     </div>
   );
 }

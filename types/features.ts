@@ -12,9 +12,23 @@ export type GeoJSONGeometry =
   | { type: "MultiLineString"; coordinates: [number, number][][] }
   | { type: "MultiPolygon"; coordinates: [number, number][][][] };
 
-// Dynamic / extra properties stored in the JSONB column
-// Schemaless — keys and shapes vary per feature and are read dynamically.
-export type DynamicProperties = Record<string, unknown>;
+// Dynamic / extra properties stored in the JSONB column.
+// Each entry is a typed, tagged object so new kinds (e.g. "link") can be
+// added later without a migration — just extend the DynamicProperty union.
+export interface TagProperty {
+  type: "tag";
+  name: string;
+  score: number; // 1-10
+}
+
+export interface LinkProperty {
+  type: "link";
+  name: string;
+  url: string;
+}
+
+export type DynamicProperty = TagProperty | LinkProperty;
+export type DynamicProperties = DynamicProperty[];
 
 //This is structured in this way to saty compliant with the GeoJSON standard.
 export interface DrawnFeature {

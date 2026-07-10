@@ -46,7 +46,11 @@ function rowToFeature(row: FeatureRow): DrawnFeature {
       description: row.description,
       category: row.category,
       createdAt: row.created_at,
-      dynamicProperties: (row.properties ?? {}) as DynamicProperties,
+      // Legacy rows may still have `{}` from before dynamicProperties was an
+      // array of typed entries — tolerate that instead of crashing consumers.
+      dynamicProperties: Array.isArray(row.properties)
+        ? (row.properties as unknown as DynamicProperties)
+        : [],
     },
   };
 }
@@ -76,7 +80,7 @@ export async function createFeature(
     p_description: input.description ?? "",
     p_category: input.category,
     p_geometry: input.geometry as unknown as Json,
-    p_properties: (input.dynamicProperties ?? {}) as Json,
+    p_properties: (input.dynamicProperties ?? []) as unknown as Json,
   });
 
   if (error) throw error;
@@ -98,7 +102,7 @@ export async function updateFeature(
       // Omit the column entirely when dynamicProperties isn't given, so the
       // existing JSONB value is left untouched rather than cleared.
       ...(dynamicProperties !== undefined && {
-        properties: dynamicProperties as Json,
+        properties: dynamicProperties as unknown as Json,
       }),
     })
     .eq("id", id)

@@ -141,7 +141,7 @@ function onCreateFeature(setFeatures: SetFeatures) {
         description: "Click to edit",
         category: "default",
         createdAt: new Date().toISOString(),
-        dynamicProperties: {},
+        dynamicProperties: [],
       },
       geometry: geojson.geometry,
     };
